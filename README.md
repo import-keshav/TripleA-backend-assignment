@@ -383,7 +383,7 @@ curl http://localhost:8080/health
 
 7. **Idempotency**: Creating an account with an existing account_id will return an error. Transaction processing is not idempotent - each request creates a new transaction record.
 
-8. **Concurrent Transactions**: The database transaction isolation level ensures that concurrent transfers are handled correctly without race conditions.
+8. **Concurrent Transactions**: The system uses row-level locking (`SELECT FOR UPDATE`) within database transactions to prevent race conditions. This ensures that concurrent transfers are handled correctly, with accounts being locked during balance checks and updates.
 
 ## Error Handling
 
@@ -400,11 +400,12 @@ All errors include descriptive messages to help with debugging.
 
 The system ensures data integrity through:
 
-1. **Database Transactions**: All transfer operations are wrapped in database transactions
-2. **Foreign Key Constraints**: Transactions reference valid accounts
-3. **Balance Validation**: Source account balance is checked before processing
-4. **Atomic Updates**: Both account balances are updated atomically
-5. **Transaction Logging**: All transactions are logged with status tracking
+1. **Database Transactions**: All transfer operations are wrapped in database transactions. Transactions are only started after pre-validation to minimize connection pool usage and improve efficiency.
+2. **Row-Level Locking**: Account rows are locked using `SELECT FOR UPDATE` within transactions to prevent race conditions and ensure consistent balance checks.
+3. **Foreign Key Constraints**: Transactions reference valid accounts, preventing orphaned transaction records.
+4. **Balance Validation**: Source account balance is validated both before starting the transaction (for early failure) and inside the transaction with row locks (for concurrency safety).
+5. **Atomic Updates**: Both account balances are updated atomically within a single transaction. If any part fails, the entire operation is rolled back.
+6. **Transaction Logging**: All transactions are logged with status tracking for complete audit trail.
 
 ## Testing
 
