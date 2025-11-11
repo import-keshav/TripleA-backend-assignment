@@ -25,8 +25,13 @@ func NewTransactionService(
 }
 
 func (s *TransactionService) ProcessTransaction(req *models.CreateTransactionRequest) error {
-	if err := req.Validate(); err != nil {
-		return fmt.Errorf("validation error: %w", err)
+	if err := s.validateBeforeTxn(req); err != nil {
+		return err
+	}
+
+	amount, err := models.Decimal(req.Amount).Float64()
+	if err != nil {
+		return fmt.Errorf("invalid amount format: %w", err)
 	}
 
 	tx, err := database.DB.Begin()
@@ -35,35 +40,14 @@ func (s *TransactionService) ProcessTransaction(req *models.CreateTransactionReq
 	}
 	defer tx.Rollback()
 
-	sourceExists, err := s.accountRepo.Exists(req.SourceAccountID)
-	if err != nil {
-		return fmt.Errorf("failed to check source account existence: %w", err)
-	}
-	if !sourceExists {
-		return fmt.Errorf("source account %d not found", req.SourceAccountID)
-	}
-
-	destExists, err := s.accountRepo.Exists(req.DestinationAccountID)
-	if err != nil {
-		return fmt.Errorf("failed to check destination account existence: %w", err)
-	}
-	if !destExists {
-		return fmt.Errorf("destination account %d not found", req.DestinationAccountID)
-	}
-
-	sourceAccount, err := s.accountRepo.GetByID(req.SourceAccountID)
+	sourceAccount, err := s.accountRepo.GetByIDWithLock(tx, req.SourceAccountID)
 	if err != nil {
 		return fmt.Errorf("failed to get source account: %w", err)
 	}
 
-	destAccount, err := s.accountRepo.GetByID(req.DestinationAccountID)
+	destAccount, err := s.accountRepo.GetByIDWithLock(tx, req.DestinationAccountID)
 	if err != nil {
 		return fmt.Errorf("failed to get destination account: %w", err)
-	}
-
-	amount, err := models.Decimal(req.Amount).Float64()
-	if err != nil {
-		return fmt.Errorf("invalid amount format: %w", err)
 	}
 
 	sourceBalance, err := sourceAccount.Balance.Float64()
@@ -104,6 +88,30 @@ func (s *TransactionService) ProcessTransaction(req *models.CreateTransactionReq
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *TransactionService) validateBeforeTxn(req *models.CreateTransactionRequest) error {
+	if err := req.Validate(); err != nil {
+		return fmt.Errorf("validation error: %w", err)
+	}
+
+	sourceExists, err := s.accountRepo.Exists(req.SourceAccountID)
+	if err != nil {
+		return fmt.Errorf("failed to check source account existence: %w", err)
+	}
+	if !sourceExists {
+		return fmt.Errorf("source account %d not found", req.SourceAccountID)
+	}
+
+	destExists, err := s.accountRepo.Exists(req.DestinationAccountID)
+	if err != nil {
+		return fmt.Errorf("failed to check destination account existence: %w", err)
+	}
+	if !destExists {
+		return fmt.Errorf("destination account %d not found", req.DestinationAccountID)
 	}
 
 	return nil

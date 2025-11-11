@@ -62,3 +62,16 @@ func (r *AccountRepository) Exists(accountID int64) (bool, error) {
 	return exists, nil
 }
 
+func (r *AccountRepository) GetByIDWithLock(tx *sql.Tx, accountID int64) (*models.Account, error) {
+	query := `SELECT account_id, balance FROM accounts WHERE account_id = $1 FOR UPDATE`
+	account := &models.Account{}
+	err := tx.QueryRow(query, accountID).Scan(&account.AccountID, &account.Balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("account not found")
+		}
+		return nil, fmt.Errorf("failed to get account: %w", err)
+	}
+	return account, nil
+}
+
