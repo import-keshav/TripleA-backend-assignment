@@ -5,19 +5,16 @@ import (
 	"os"
 )
 
-// Config holds all configuration for the application
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 }
 
-// ServerConfig holds server configuration
 type ServerConfig struct {
 	Host string
 	Port string
 }
 
-// DatabaseConfig holds database configuration
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -27,7 +24,6 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-// LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
 	config := &Config{
 		Server: ServerConfig{
@@ -47,7 +43,6 @@ func LoadConfig() (*Config, error) {
 	return config, nil
 }
 
-// GetDSN returns the PostgreSQL connection string
 func (c *Config) GetDSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
@@ -60,12 +55,10 @@ func (c *Config) GetDSN() string {
 	)
 }
 
-// GetServerAddress returns the server address
 func (c *Config) GetServerAddress() string {
-	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
+	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port	)
 }
 
-// getEnv retrieves an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

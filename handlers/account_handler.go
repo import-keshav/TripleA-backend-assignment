@@ -10,19 +10,16 @@ import (
 	"triplea-backend-assignment/service"
 )
 
-// AccountHandler handles HTTP requests for accounts
 type AccountHandler struct {
 	accountService *service.AccountService
 }
 
-// NewAccountHandler creates a new account handler
 func NewAccountHandler(accountService *service.AccountService) *AccountHandler {
 	return &AccountHandler{
 		accountService: accountService,
 	}
 }
 
-// CreateAccount handles POST /accounts
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -36,7 +33,6 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.accountService.CreateAccount(&req); err != nil {
-		// Check if it's a validation error or account already exists
 		if isValidationError(err) || isAccountExistsError(err) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -48,7 +44,6 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-// GetAccount handles GET /accounts/{account_id}
 func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

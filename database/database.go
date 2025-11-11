@@ -8,10 +8,8 @@ import (
 	"triplea-backend-assignment/config"
 )
 
-// DB is the database connection pool
 var DB *sql.DB
 
-// Connect establishes a connection to the PostgreSQL database
 func Connect(cfg *config.Config) error {
 	dsn := cfg.GetDSN()
 	var err error
@@ -20,19 +18,16 @@ func Connect(cfg *config.Config) error {
 		return fmt.Errorf("failed to open database connection: %w", err)
 	}
 
-	// Test the connection
 	if err = DB.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set connection pool settings
 	DB.SetMaxOpenConns(25)
 	DB.SetMaxIdleConns(5)
 
 	return nil
 }
 
-// Close closes the database connection
 func Close() error {
 	if DB != nil {
 		return DB.Close()
@@ -40,7 +35,6 @@ func Close() error {
 	return nil
 }
 
-// Migrate runs database migrations
 func Migrate() error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS accounts (

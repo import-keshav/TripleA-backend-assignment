@@ -8,15 +8,12 @@ import (
 	"triplea-backend-assignment/models"
 )
 
-// AccountRepository handles database operations for accounts
 type AccountRepository struct{}
 
-// NewAccountRepository creates a new account repository
 func NewAccountRepository() *AccountRepository {
 	return &AccountRepository{}
 }
 
-// Create creates a new account
 func (r *AccountRepository) Create(accountID int64, balance models.Decimal) error {
 	query := `INSERT INTO accounts (account_id, balance) VALUES ($1, $2)`
 	_, err := database.DB.Exec(query, accountID, balance)
@@ -26,7 +23,6 @@ func (r *AccountRepository) Create(accountID int64, balance models.Decimal) erro
 	return nil
 }
 
-// GetByID retrieves an account by its ID
 func (r *AccountRepository) GetByID(accountID int64) (*models.Account, error) {
 	query := `SELECT account_id, balance FROM accounts WHERE account_id = $1`
 	account := &models.Account{}
@@ -40,7 +36,6 @@ func (r *AccountRepository) GetByID(accountID int64) (*models.Account, error) {
 	return account, nil
 }
 
-// UpdateBalance updates the balance of an account
 func (r *AccountRepository) UpdateBalance(accountID int64, newBalance models.Decimal) error {
 	query := `UPDATE accounts SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE account_id = $2`
 	result, err := database.DB.Exec(query, newBalance, accountID)
@@ -57,7 +52,6 @@ func (r *AccountRepository) UpdateBalance(accountID int64, newBalance models.Dec
 	return nil
 }
 
-// Exists checks if an account exists
 func (r *AccountRepository) Exists(accountID int64) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM accounts WHERE account_id = $1)`
 	var exists bool
